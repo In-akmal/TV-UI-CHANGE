@@ -2,8 +2,8 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingTop="8dp"
-    android:paddingBottom="8dp"
+    android:paddingTop="@dimen/space_2"
+    android:paddingBottom="@dimen/space_2"
     android:clipChildren="false"
     android:clipToPadding="false">
 
@@ -13,6 +13,8 @@
         android:layout_height="101dp"
         android:layout_gravity="center_horizontal|top"
         android:background="@drawable/tile_bg"
+        android:foreground="@drawable/card_foreground"
+        android:elevation="2dp"
         android:focusable="true"
         android:clickable="true">
 
@@ -25,8 +27,8 @@
 
         <ImageView
             android:id="@+id/icon"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:layout_gravity="center"
             android:layout_marginBottom="14dp"
             android:visibility="gone"
@@ -37,14 +39,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp"
-            android:paddingBottom="8dp"
+            android:paddingStart="@dimen/space_2"
+            android:paddingEnd="@dimen/space_2"
+            android:paddingBottom="@dimen/space_2"
             android:gravity="center"
             android:singleLine="true"
             android:ellipsize="end"
-            android:textColor="#FFFFFFFF"
-            android:textSize="13sp"
+            android:textColor="@color/color_text_primary"
+            android:textSize="@dimen/text_kicker"
             android:fontFamily="@string/font_body"
             android:visibility="gone" />
     </FrameLayout>
@@ -60,8 +62,8 @@
         android:ellipsize="end"
         android:alpha="0"
         android:translationY="-6dp"
-        android:textColor="#F2FFFFFF"
-        android:textSize="14sp"
+        android:textColor="@color/color_text_primary"
+        android:textSize="@dimen/text_body"
         android:fontFamily="@string/font_medium"
         android:letterSpacing="0.02" />
 </FrameLayout>

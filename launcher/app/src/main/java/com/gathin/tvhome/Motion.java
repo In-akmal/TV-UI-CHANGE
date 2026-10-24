@@ -1,10 +1,24 @@
 package com.gathin.tvhome;
 
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.Interpolator;
+
 import androidx.dynamicanimation.animation.SpringAnimation;
 import androidx.dynamicanimation.animation.SpringForce;
 
-/** Reduced motion (config.xml reduced_motion): the one spring and the one time limit every animation uses then. */
+/** Motion tokens and animation helpers. */
 final class Motion {
+
+    /** Canonical focus duration in milliseconds. */
+    static final int FOCUS_MS = 180;
+    /** Canonical unfocus duration in milliseconds. */
+    static final int UNFOCUS_MS = 150;
+    /** Canonical focus scale factor. */
+    static final float FOCUS_SCALE = 1.05f;
+    /** Canonical focus vertical lift in dp. */
+    static final float FOCUS_TRANSLATE_Y_DP = -4f;
+    /** Subtle decelerate interpolator (fast response, zero bounce/overshoot). */
+    static final Interpolator DECELERATE = new DecelerateInterpolator(1.2f);
 
     /** The longest any reduced-motion animation runs, in milliseconds. */
     static final int REDUCED_MS = 90;

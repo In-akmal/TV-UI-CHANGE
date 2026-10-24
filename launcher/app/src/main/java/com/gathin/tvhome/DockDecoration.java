@@ -43,10 +43,10 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
         this.namesRoom = names ? 22 * density : 0;
         this.lightGlass = lightGlass;
         this.evenPadding = evenPadding;
-        band.setColor(translucent ? 0x8C121014 : (Math.round(opacity * 2.55f) << 24) | 0x141416);
+        band.setColor(translucent ? 0x8C14171F : (Math.round(opacity * 2.55f) << 24) | 0x14171F);
         edge.setStyle(Paint.Style.STROKE);
         edge.setStrokeWidth(density);
-        edge.setColor(lightGlass ? 0x38FFFFFF : translucent ? 0x26FFFFFF : 0x1FFFFFFF);
+        edge.setColor(lightGlass ? 0x38FFFFFF : translucent ? 0x20FFFFFF : 0x18FFFFFF);
     }
 
     /** Concentric corners: the band's radius is the tiles' radius plus the band's padding around them. */
@@ -114,9 +114,9 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
             rect.inset(-even, -even);
             radius = radiusPx(radius, even);
         } else {
-            // dock_even_padding off: the band as before, with its fixed 26 dp corners.
+            // dock_even_padding off: the band with concentric corners based on pad.
             rect.inset(-side, -pad);
-            radius = 26 * density;
+            radius = radiusPx(radius, pad);
         }
         rect.bottom += namesRoom;
         if (lightGlass && (rect.top != shaderTop || rect.bottom != shaderBottom)) {

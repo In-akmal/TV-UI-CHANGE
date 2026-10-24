@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Core Palette Tokens -->
+    <color name="color_background">#0A0C10</color>
+    <color name="color_surface">#14171F</color>
+    <color name="color_surface_elevated">#1E222D</color>
+    <color name="color_text_primary">#FFFFFFFF</color>
+    <color name="color_text_secondary">#FFA0A5B2</color>
+    <color name="color_text_muted">#FF646A7A</color>
+    <color name="color_accent">#FF3875F6</color>
+    <color name="color_focus_border">#40FFFFFF</color>
+    <color name="color_divider">#18FFFFFF</color>
+</resources>

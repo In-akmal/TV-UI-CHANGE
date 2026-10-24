@@ -159,9 +159,9 @@ final class AppLibraryDialog {
         panel.setPadding(dp(12), dp(8), dp(12), dp(12));
         panel.setBackgroundResource(R.drawable.glass_panel);
         View decor = activity.getWindow().getDecorView();
-        catalogWidth = Math.min(dp(800), Math.max(dp(200), decor.getWidth() - dp(64)));
+        catalogWidth = Math.min(dp(860), Math.max(dp(200), decor.getWidth() - dp(48)));
         int width = catalogWidth;
-        int height = dp(280);
+        int height = dp(340);
         popup = new PopupWindow(panel, width, height, true);
         popup.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popup.setOutsideTouchable(true);
@@ -344,7 +344,7 @@ final class AppLibraryDialog {
 
     private void showCatalog() {
         stopHighlight();
-        resize(catalogWidth, dp(280));
+        resize(catalogWidth, dp(340));
         panel.removeAllViews();
         LinearLayout header = new LinearLayout(activity);
         header.setGravity(Gravity.CENTER_VERTICAL);
@@ -389,11 +389,11 @@ final class AppLibraryDialog {
         list.setAdapter(new Catalog());
         shelf.addView(list, new FrameLayout.LayoutParams(-1, -1));
         highlight = new GlassView(activity, null);
-        highlight.setRadius(dp(20));
+        highlight.setRadius(dp(14));
         highlight.setAlpha(0f);
         highlight.setFocusable(false);
         highlight.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        shelf.addView(highlight, new FrameLayout.LayoutParams(dp(144), dp(180)));
+        shelf.addView(highlight, new FrameLayout.LayoutParams(dp(184), dp(106)));
         scrollOffset = 0;
         spring = new SpringAnimation(highlight, new FloatPropertyCompat<View>("libraryScrollX") {
             @Override public float getValue(View view) { return view.getTranslationX() + scrollOffset; }
@@ -594,10 +594,10 @@ final class AppLibraryDialog {
     private final class Catalog extends RecyclerView.Adapter<Row> {
         @NonNull @Override public Row onCreateViewHolder(@NonNull ViewGroup parent, int type) {
             FrameLayout row = new FrameLayout(activity);
-            RecyclerView.LayoutParams params = new RecyclerView.LayoutParams(dp(132), dp(170));
-            params.setMargins(dp(6), dp(2), dp(6), dp(2));
+            RecyclerView.LayoutParams params = new RecyclerView.LayoutParams(dp(180), dp(101));
+            params.setMargins(dp(6), dp(4), dp(6), dp(4));
             row.setLayoutParams(params);
-            row.setPadding(dp(10), dp(12), dp(10), dp(10));
+            row.setPadding(dp(8), dp(6), dp(8), dp(6));
             row.setFocusableInTouchMode(true);
             row.setClickable(true);
             LinearLayout content = new LinearLayout(activity);
@@ -607,22 +607,22 @@ final class AppLibraryDialog {
             ImageView icon = new ImageView(activity);
             icon.setId(R.id.icon);
             icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            content.addView(icon, new LinearLayout.LayoutParams(dp(60), dp(60)));
-            TextView name = text("", 15, Color.WHITE);
+            content.addView(icon, new LinearLayout.LayoutParams(dp(44), dp(44)));
+            TextView name = text("", 13, Color.WHITE);
             name.setId(R.id.title);
             name.setGravity(Gravity.CENTER);
-            name.setMaxLines(2);
-            LinearLayout.LayoutParams nameParams = new LinearLayout.LayoutParams(-1, dp(44));
-            nameParams.topMargin = dp(10);
+            name.setMaxLines(1);
+            LinearLayout.LayoutParams nameParams = new LinearLayout.LayoutParams(-1, -2);
+            nameParams.topMargin = dp(4);
             content.addView(name, nameParams);
-            TextView status = text("", 11, 0xBBFFFFFF);
+            TextView status = text("", 10, 0xBBFFFFFF);
             status.setId(R.id.status);
             status.setGravity(Gravity.CENTER);
-            status.setMaxLines(2);
+            status.setMaxLines(1);
             content.addView(status, new LinearLayout.LayoutParams(-1, -2));
             View check = new View(activity);
             check.setId(R.id.dot);
-            FrameLayout.LayoutParams badge = new FrameLayout.LayoutParams(dp(18), dp(18), Gravity.TOP | Gravity.END);
+            FrameLayout.LayoutParams badge = new FrameLayout.LayoutParams(dp(16), dp(16), Gravity.TOP | Gravity.END);
             badge.setMargins(0, dp(2), dp(2), 0);
             row.addView(check, badge);
             return new Row(row);
@@ -639,12 +639,12 @@ final class AppLibraryDialog {
             boolean recent = !selectionMode && LibraryApps.recent(installTimes.getOrDefault(pkg, 0L), catalogTime);
             status.setText(home ? R.string.library_on_home : recent ? R.string.library_recent : R.string.library_add_home);
             status.setVisibility(View.VISIBLE);
-            holder.itemView.setBackground(surface(home ? 0x1475BBA4 : 0x0CFFFFFF, 18));
+            holder.itemView.setBackground(surface(home ? 0x1475BBA4 : 0x0CFFFFFF, 14));
             View check = holder.itemView.findViewById(R.id.dot);
-            check.getLayoutParams().width = dp(home ? 18 : 8);
-            check.getLayoutParams().height = dp(home ? 18 : 8);
+            check.getLayoutParams().width = dp(home ? 16 : 7);
+            check.getLayoutParams().height = dp(home ? 16 : 7);
             if (home) check.setBackgroundResource(R.drawable.library_check);
-            else check.setBackground(surface(0xFF70D9A0, 8));
+            else check.setBackground(surface(0xFF70D9A0, 7));
             check.setVisibility(home || recent ? View.VISIBLE : View.GONE);
             holder.itemView.setOnClickListener(v -> {
                 if (selectionMode) changeHome(app, !onHome.test(pkg));

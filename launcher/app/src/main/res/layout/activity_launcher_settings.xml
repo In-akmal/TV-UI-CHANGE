@@ -2,7 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FF101419"
+    android:background="@color/color_background"
     android:fillViewport="true">
 
     <LinearLayout
@@ -18,8 +18,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/launcher_settings"
-            android:textColor="#FFFFFFFF"
-            android:textSize="34sp" />
+            android:textColor="@color/color_text_primary"
+            android:textSize="32sp"
+            android:fontFamily="@string/font_medium" />
 
         <TextView
             android:id="@+id/reorderChoice"
@@ -33,8 +34,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="28dp"
             android:text="@string/columns_label"
-            android:textColor="#FFFFFFFF"
-            android:textSize="20sp" />
+            android:textColor="@color/color_text_primary"
+            android:textSize="18sp"
+            android:fontFamily="@string/font_medium" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -51,10 +53,11 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
+            android:layout_marginTop="20dp"
             android:text="@string/rows_below_dock_label"
-            android:textColor="#FFFFFFFF"
-            android:textSize="20sp" />
+            android:textColor="@color/color_text_primary"
+            android:textSize="18sp"
+            android:fontFamily="@string/font_medium" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -71,10 +74,11 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
+            android:layout_marginTop="20dp"
             android:text="@string/dock_opacity_label"
-            android:textColor="#FFFFFFFF"
-            android:textSize="20sp" />
+            android:textColor="@color/color_text_primary"
+            android:textSize="18sp"
+            android:fontFamily="@string/font_medium" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -96,7 +100,7 @@
         <TextView
             android:id="@+id/animationsChoice"
             style="@style/SettingsRow"
-            android:layout_marginTop="28dp" />
+            android:layout_marginTop="24dp" />
 
         <TextView
             android:id="@+id/advancedChoice"
@@ -108,22 +112,22 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="@string/advanced_effects_warning"
-            android:textColor="#FFACB8C1"
-            android:textSize="14sp" />
+            android:textColor="@color/color_text_secondary"
+            android:textSize="13sp" />
 
         <TextView
             android:id="@+id/followThemeChoice"
             style="@style/SettingsRow"
-            android:layout_marginTop="18dp"
+            android:layout_marginTop="24dp"
             android:text="@string/follow_theme" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="7dp"
+            android:layout_marginTop="8dp"
             android:text="@string/follow_theme_hint"
-            android:textColor="#FFACB8C1"
-            android:textSize="14sp" />
+            android:textColor="@color/color_text_secondary"
+            android:textSize="13sp" />
 
         <TextView
             android:id="@+id/defaultHomeChoice"
@@ -134,15 +138,15 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="7dp"
+            android:layout_marginTop="8dp"
             android:text="@string/home_settings_help"
-            android:textColor="#FFACB8C1"
-            android:textSize="14sp" />
+            android:textColor="@color/color_text_secondary"
+            android:textSize="13sp" />
 
         <TextView
             android:id="@+id/tvSettingsChoice"
             style="@style/SettingsRow"
-            android:layout_marginTop="18dp"
+            android:layout_marginTop="24dp"
             android:text="@string/tv_settings" />
     </LinearLayout>
 </ScrollView>

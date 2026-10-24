@@ -232,7 +232,15 @@ public final class LauncherSettingsActivity extends Activity {
                 "none".equals(wallpaperCurrent) ? getString(R.string.wallpaper_none)
                         : wallpaperCurrent != null ? wallpaperCurrent
                         : getString(R.string.wallpaper_theme_default)));
-        followThemeChoice.setSelected(!hasOnTvChoices());
+        boolean hasOverrides = hasOnTvChoices();
+        followThemeChoice.setSelected(!hasOverrides);
+        String label = getString(R.string.follow_theme);
+        if (!hasOverrides) {
+            File dir = Config.dir(this);
+            boolean custom = dir != null && new File(dir, Config.FILE_NAME).isFile();
+            label = label + " (" + getString(custom ? R.string.connected : R.string.wallpaper_theme_default) + ")";
+        }
+        followThemeChoice.setText(label);
     }
 
     private boolean hasOnTvChoices() {

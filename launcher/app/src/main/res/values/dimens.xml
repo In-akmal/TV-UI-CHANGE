@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Spacing Scale -->
+    <dimen name="space_1">4dp</dimen>
+    <dimen name="space_2">8dp</dimen>
+    <dimen name="space_3">12dp</dimen>
+    <dimen name="space_4">16dp</dimen>
+    <dimen name="space_5">24dp</dimen>
+
+    <!-- Component Geometry -->
+    <dimen name="card_radius">14dp</dimen>
+
+    <!-- Typography Scale -->
+    <dimen name="text_kicker">12sp</dimen>
+    <dimen name="text_body">15sp</dimen>
+</resources>

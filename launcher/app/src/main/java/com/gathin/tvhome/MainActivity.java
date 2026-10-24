@@ -249,6 +249,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private PopupWindow openPopup;
     /** Reorder mode is on (top-bar button). */
     private boolean reordering;
+    private boolean skipNextOkUp;
     /** Key of the tile being carried in reorder mode, or null. */
     private String movingKey;
     /** Tile order when reorder mode started, to save only when something moved. */
@@ -591,7 +592,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
         btnInputs = findViewById(R.id.btnInputs);
         View btnSettings = findViewById(R.id.btnSettings);
-        btnInputs.setOnClickListener(v -> showInputs());
+        btnInputs.setOnClickListener(v -> openBluetooth());
         btnWifi.setOnClickListener(v -> openNetworkPill());
         btnWifi.setOnLongClickListener(v -> {
             open(systemIntent(Settings.ACTION_WIFI_SETTINGS));
@@ -1129,24 +1130,22 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         if (handleSettingsKey(event)) return true;
-        if (tileMenuEnabled && !reordering && openPopup == null && cardPrompt == null
-                && event.getKeyCode() == KeyEvent.KEYCODE_MENU) {
+        int code = event.getKeyCode();
+        boolean ok = code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER
+                || code == KeyEvent.KEYCODE_NUMPAD_ENTER;
+        boolean back = code == KeyEvent.KEYCODE_BACK || code == KeyEvent.KEYCODE_ESCAPE;
+        if (!reordering && openPopup == null && cardPrompt == null
+                && (code == KeyEvent.KEYCODE_MENU || (ok && event.isLongPress()))) {
             int position = focusedTilePosition();
-            if (position >= 0 && position < adapter.appCount()
+            if (position >= 0 && position < adapter.movableCount()
                     && !getPackageName().equals(adapter.packageAt(position))) {
-                if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) {
-                    onTileLongPress(position, getCurrentFocus());
-                }
+                onTileLongPress(position, getCurrentFocus());
                 return true;
             }
         }
         if (!reordering) return super.dispatchKeyEvent(event);
         if (dockEditing) return dispatchDockEdit(event);
         boolean down = event.getAction() == KeyEvent.ACTION_DOWN;
-        int code = event.getKeyCode();
-        boolean ok = code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER
-                || code == KeyEvent.KEYCODE_NUMPAD_ENTER;
-        boolean back = code == KeyEvent.KEYCODE_BACK || code == KeyEvent.KEYCODE_ESCAPE;
         if (movingKey != null) {
             switch (code) {
                 case KeyEvent.KEYCODE_DPAD_LEFT:
@@ -1156,15 +1155,26 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                     if (down) moveBy(code);
                     return true;
                 default:
-                    if (ok || back) {
-                        if (!down) drop();
+                    if (ok) {
+                        if (skipNextOkUp) {
+                            if (!down) skipNextOkUp = false;
+                            return true;
+                        }
+                        if (!down) {
+                            drop();
+                            endReorder();
+                        }
+                        return true;
+                    }
+                    if (back) {
+                        if (!down) cancelReorder();
                         return true;
                     }
                     return super.dispatchKeyEvent(event);
             }
         }
         if (back) {
-            if (!down) endReorder();
+            if (!down) cancelReorder();
             return true;
         }
         int pos = focusedTilePosition();
@@ -1353,6 +1363,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /** Ends the mode and saves the order if it changed since the mode started. */
     private void endReorder() {
         if (!reordering) return;
+        skipNextOkUp = false;
         dockEditing = false;
         dockEditSlot = -1;
         dockEditAppKey = null;
@@ -1383,9 +1394,30 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (fillDockLeavesSlots) reloadTiles();   // the empty dock slots left out while reordering come back
     }
 
+    /** Cancels reorder mode without saving, restoring the previous order from disk. */
+    private void cancelReorder() {
+        if (!reordering) return;
+        skipNextOkUp = false;
+        dockEditing = false;
+        dockEditSlot = -1;
+        dockEditAppKey = null;
+        if (movingKey != null) {
+            lastFocusedKey = movingKey;
+        }
+        drop();
+        reordering = false;
+        adapter.setReordering(false);
+        glass.setAccent(festive ? festival.accentColor() : 0);
+        btnReorder.setActivated(false);
+        dockInSession = null;
+        orderAtStart = null;
+        Order savedOrder = Order.load(Order.file(this));
+        adapter.setSavedOrder(Order.ranks(savedOrder, dockApps), Order.docked(savedOrder, dockApps));
+        reloadApps(false);
+    }
+
     /**
-     * Moves the carried tile one step. Left and Right wrap across rows, like a list; Up and Down move a whole row,
-     * and Down into a short last row lands on its last tile. Nothing moves past either end or up into the top bar.
+     * Moves the carried tile one step with strict grid boundaries (no wrapping across rows).
      */
     private void moveBy(int keyCode) {
         int from = adapter.positionOf(movingKey);
@@ -1394,15 +1426,24 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             drop();
             return;
         }
-        int to;
-        // rtl_app_grid (Hebrew) mirrors the grid: position 0 is on the right, so Left moves towards the end.
-        if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) to = rtlAppGrid ? from + 1 : from - 1;
-        else if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) to = rtlAppGrid ? from - 1 : from + 1;
-        else if (keyCode == KeyEvent.KEYCODE_DPAD_UP) to = from - COLUMNS;
-        else if (from + COLUMNS < n) to = from + COLUMNS;
-        else to = from / COLUMNS < (n - 1) / COLUMNS ? n - 1 : from;
+        int to = from;
+        if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
+            if (GridNavigation.atHorizontalEdge(from, n, COLUMNS, rtlAppGrid, true)) return;
+            to = rtlAppGrid ? from + 1 : from - 1;
+        } else if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+            if (GridNavigation.atHorizontalEdge(from, n, COLUMNS, rtlAppGrid, false)) return;
+            to = rtlAppGrid ? from - 1 : from + 1;
+        } else if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+            if (from - COLUMNS < 0) return;
+            to = from - COLUMNS;
+        } else if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+            if (from + COLUMNS < n) to = from + COLUMNS;
+            else if (from / COLUMNS < (n - 1) / COLUMNS) to = n - 1;
+            else return;
+        }
         if (to < 0 || to >= n || to == from) return;
-        keepScroll(() -> adapter.move(from, to));
+        final int target = to;
+        keepScroll(() -> adapter.move(from, target));
         // The owner carries this tile: where it lands decides whether it is in the dock, not dock_apps (#499).
         if (to < COLUMNS) dockInSession.add(movingKey);
         else dockInSession.remove(movingKey);
@@ -1497,7 +1538,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         float w = card.getWidth() * scale + 2 * pad;
         float h = card.getHeight() * scale + 2 * pad;
         float x = r.exactCenterX() - w / 2f;
-        float y = r.exactCenterY() - h / 2f - (advancedEffects ? 4f * density : 0f);
+        float y = r.exactCenterY() - h / 2f - (animations ? 4f * density : 0f);
 
         ViewGroup.LayoutParams lp = glass.getLayoutParams();
         if (lp.width != (int) w || lp.height != (int) h || card.getWidth() != glassCardW) {
@@ -1649,8 +1690,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      * scrimPercent of its strength (cinematic_scrim). cinematic_art 0 leaves the artwork out, 0 percent the scrim.
      */
     private void setUpCinematicShelf(int scrimPercent) {
-        heroName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 68f);
-        heroName.setLetterSpacing(-0.025f);
+        heroName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 34f);
+        heroName.setLetterSpacing(-0.01f);
         heroMeta.setVisibility(View.INVISIBLE);   // keeps its height, so the name does not jump when it fills in
         heroDots.setVisibility(heroDotsShown ? View.VISIBLE : View.GONE);
         heroArt.setVisibility(heroArtAlpha > 0f ? View.VISIBLE : View.GONE);
@@ -2545,25 +2586,20 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         return SystemSettings.intent(this, standardAction);
     }
 
-    /** Hides the Inputs pill when it would have nothing to list: streaming boxes have no HDMI-in, AV or tuner. */
+    /** Updates Bluetooth pill visibility. */
     private void updateInputsButton() {
-        if (!showInputsPill) {
-            btnInputs.setVisibility(View.GONE);
-            return;
-        }
-        boolean any = liveTvIntent() != null || !sourcePanelService.isEmpty()
-                || (coocaaSources && !CoocaaSources.list(this).isEmpty());
-        TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
-        if (!any && tim != null) {
-            for (TvInputInfo info : tim.getTvInputList()) {
-                // Inputs hidden in Settings > Inputs are left out of the menu, so they don't count here either.
-                if (info.isPassthroughInput() && !info.isHidden(this)) {
-                    any = true;
-                    break;
-                }
+        btnInputs.setVisibility(showInputsPill ? View.VISIBLE : View.GONE);
+    }
+
+    private void openBluetooth() {
+        Intent intent = new Intent("com.google.android.intent.action.CONNECT_INPUT");
+        if (getPackageManager().resolveActivity(intent, 0) == null) {
+            intent = new Intent(Settings.ACTION_BLUETOOTH_SETTINGS);
+            if (getPackageManager().resolveActivity(intent, 0) == null) {
+                intent = systemIntent(Settings.ACTION_SETTINGS);
             }
         }
-        btnInputs.setVisibility(any ? View.VISIBLE : View.GONE);
+        open(intent);
     }
 
     /** boot_to_live_tv: the first time Home comes up after the TV starts, open the Live TV app instead. Once per
@@ -2969,57 +3005,22 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     /**
-     * Hold OK on a tile: a glass menu next to it. Move starts reorder mode with this tile already picked up;
-     * Remove from Home takes the shortcut off (only with the app library on, where one press adds it back);
-     * App info opens the TV's page for the app, which is what holding OK used to do.
+     * Hold OK on a tile: enters reorder mode immediately with this tile picked up.
      */
     @Override
     public void onTileLongPress(int position, View card) {
         if (reordering) return;
         String key = adapter.keyAt(position);
         String pkg = adapter.packageAt(position);
-        // Empty dock slots and the Default-home tile carry the launcher's own package: no menu for them.
+        // Empty dock slots and the Default-home tile carry the launcher's own package: no reorder for them.
         if (key == null || pkg == null || pkg.equals(getPackageName())) return;
-        View panel = getLayoutInflater().inflate(R.layout.popup_inputs, root, false);
-        LinearLayout rows = panel.findViewById(R.id.rows);
-        PopupWindow popup = glassPopup(panel, (int) (200 * density));
-        if (dockRow && position < adapter.movableCount()) {
-            boolean inDock = position < COLUMNS;
-            addSettingsMenuRow(rows, popup, inDock ? R.string.tile_replace_in_dock : R.string.tile_add_to_dock,
-                    () -> startDockEditFor(key, inDock));
-        }
-        if (position < adapter.movableCount()) addSettingsMenuRow(rows, popup, R.string.tile_move, () -> {
-            if (!beginReorder()) return;
-            int at = adapter.positionOf(key);   // beginReorder can rebuild the tiles
-            if (at < 0) return;
-            focusTile(at);
-            pickUp(at);
-            Toast.makeText(this, R.string.reorder_hint, Toast.LENGTH_LONG).show();
-        });
-        if (appLibraryEnabled) addSettingsMenuRow(rows, popup, R.string.library_remove_shortcut, () -> {
-            if (LibraryApps.save(this, pkg, false)) reloadApps(false);
-            else Toast.makeText(this, R.string.library_save_failed, Toast.LENGTH_LONG).show();
-        });
-        addSettingsMenuRow(rows, popup, R.string.library_app_info, () -> open(new Intent(
-                Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + pkg))));
-        panel.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
-        popup.setWidth(Math.max((int) (200 * density), panel.getMeasuredWidth()));
-        // Dock tiles sit near the bottom of the screen: open the menu above the tile when it would not fit below.
-        int[] at = new int[2];
-        card.getLocationInWindow(at);
-        int gap = (int) (10 * density), height = panel.getMeasuredHeight();
-        if (at[1] + card.getHeight() + gap + height <= root.getHeight()) {
-            dropIn(popup, panel, card, Gravity.START);
-        } else {
-            panel.setAlpha(0f);
-            panel.setPivotY(height);
-            panel.setScaleY(0.92f);
-            panel.setTranslationY(8 * density);
-            popup.showAtLocation(root, Gravity.NO_GRAVITY, at[0], Math.max(0, at[1] - gap - height));
-            panel.animate().alpha(1f).scaleY(1f).translationY(0f).setDuration(220)
-                    .setInterpolator(new android.view.animation.DecelerateInterpolator(1.6f)).start();
-        }
-        rows.getChildAt(0).requestFocus();
+        if (position >= adapter.movableCount()) return;
+        if (!beginReorder()) return;
+        int at = adapter.positionOf(key);
+        if (at < 0) return;
+        skipNextOkUp = true;
+        focusTile(at);
+        pickUp(at);
     }
 
     private void addSettingsMenuRow(LinearLayout rows, PopupWindow popup, int title, Runnable action) {
